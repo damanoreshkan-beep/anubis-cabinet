@@ -1,0 +1,26 @@
+{
+  "name": "anubis-cabinet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/scope-tailwind-globals.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.1",
+    "preact": "^10.29.1",
+    "preact-custom-element": "^4.6.0",
+    "skinview3d": "^3.4.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
+    "@types/node": "^24.12.2",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.13",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.10"
+  }
+}

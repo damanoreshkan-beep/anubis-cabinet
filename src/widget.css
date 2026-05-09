@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light DOM, CSS injected globally — every custom rule below has to scope
+ * itself with `.aw-cabinet-scope` ancestor so we don't clobber the host
+ * page's own .glass / .btn-glow / etc. Tailwind utilities are auto-scoped
+ * via `important: '.aw-cabinet-scope'` in tailwind.config.js. */
+
+.aw-cabinet-scope .glass {
+    background: rgba(139, 92, 246, 0.06);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(139, 92, 246, 0.18);
+}
+
+.aw-cabinet-scope .btn-glow {
+    position: relative;
+    overflow: hidden;
+}
+.aw-cabinet-scope .btn-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+    pointer-events: none;
+}
+.aw-cabinet-scope .btn-glow:hover::after { transform: translateX(100%); }
+
+.aw-cabinet-scope .gold-text {
+    color: transparent;
+    background: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+/* Dropzone for the skin / cape uploaders. Highlights when a file is
+ * dragged over so the user knows where to drop. */
+.aw-cabinet-scope .dropzone {
+    transition: border-color 0.15s, background 0.15s;
+}
+.aw-cabinet-scope .dropzone.is-active {
+    border-color: rgba(168, 85, 247, 0.6);
+    background: rgba(124, 58, 237, 0.10);
+}
+
+/* skinview3d canvas frame — gives the 3D preview a glow card matching
+ * the rest of the cabinet. */
+.aw-cabinet-scope .skin-preview-frame {
+    background: radial-gradient(ellipse at 50% 30%, rgba(124,58,237,.18), rgba(7,6,18,.95) 65%);
+    border-radius: 1rem;
+    border: 1px solid rgba(168, 85, 247, 0.22);
+    overflow: hidden;
+}
