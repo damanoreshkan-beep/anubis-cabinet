@@ -56,7 +56,7 @@ export function SkinPage({ sb, user, t }: Props) {
                         kind="skin"
                         slim={slim}
                         accept="image/png"
-                        validateImage={img => isValidSkinSize(img)}
+                        validateImage={dims => isValidSkinSize(dims.w, dims.h)}
                         onUploaded={handleSkinUpload}
                         label={skinSha ? t.skinReplace : t.skinUpload}
                         hint={t.skinHint}
@@ -98,8 +98,7 @@ export function SkinPage({ sb, user, t }: Props) {
     )
 }
 
-function isValidSkinSize(img: HTMLImageElement) {
-    const w = img.naturalWidth, h = img.naturalHeight
+function isValidSkinSize(w: number, h: number) {
     // Classic 64×64, legacy 64×32, HD 128×128 (and 128×64 legacy HD).
     return (w === 64 && h === 64) || (w === 64 && h === 32) || (w === 128 && h === 128) || (w === 128 && h === 64)
 }

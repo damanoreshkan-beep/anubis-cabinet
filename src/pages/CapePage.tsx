@@ -51,7 +51,7 @@ export function CapePage({ sb, user, t }: Props) {
                         t={t}
                         kind="cape"
                         accept="image/png"
-                        validateImage={img => isValidCapeSize(img)}
+                        validateImage={dims => isValidCapeSize(dims.w, dims.h)}
                         onUploaded={handleCapeUpload}
                         label={capeSha ? t.capeReplace : t.capeUpload}
                         hint={t.capeHint}
@@ -86,7 +86,6 @@ export function CapePage({ sb, user, t }: Props) {
     )
 }
 
-function isValidCapeSize(img: HTMLImageElement) {
-    const w = img.naturalWidth, h = img.naturalHeight
+function isValidCapeSize(w: number, h: number) {
     return (w === 64 && h === 32) || (w === 128 && h === 64)
 }

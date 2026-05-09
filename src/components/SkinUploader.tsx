@@ -1,13 +1,32 @@
 // File picker + drag-drop + client-side validation + upload via the
 // skin-upload Edge Function. The function does the authoritative
 // PNG/dimension check and SHA-256 hashing server-side; the client-side
-// validateImage() is purely UX (instant feedback before the round-trip).
+// dimension check below is purely UX (instant feedback before the
+// round-trip).
+//
+// We read width/height from the PNG IHDR header directly instead of
+// loading the bytes into an Image element. URL.createObjectURL is
+// missing in Electron renderers with nodeIntegration enabled (Node's
+// URL shadows the Web URL), and decoding via Image would otherwise
+// silently throw before we even attempt to upload.
 import { useRef, useState, useCallback } from 'preact/hooks'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { T } from '../locales'
 import { uploadTexture, TextureKind } from '../lib/uploadTexture'
 
-export type Validator = (img: HTMLImageElement) => boolean
+export interface PngDimensions { w: number; h: number }
+export type Validator = (dims: PngDimensions) => boolean
+
+// PNG signature is the first 8 bytes; the IHDR chunk starts at byte 8
+// and stores width and height as big-endian uint32s at offsets 16/20.
+const PNG_SIG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+function readPngDimensions(buf: ArrayBuffer): PngDimensions | null {
+    const bytes = new Uint8Array(buf)
+    if (bytes.length < 24) return null
+    for (let i = 0; i < 8; i++) if (bytes[i] !== PNG_SIG[i]) return null
+    const dv = new DataView(buf)
+    return { w: dv.getUint32(16), h: dv.getUint32(20) }
+}
 
 interface Props {
     sb: SupabaseClient
@@ -36,17 +55,9 @@ export function SkinUploader({ sb, user: _user, t, kind, slim, accept, validateI
         if (file.type !== 'image/png') { setError(t.errInvalidPng); return }
         if (file.size > 1024 * 1024)   { setError(t.errTooLarge);   return }
         const buf = await file.arrayBuffer()
-        const blobUrl = URL.createObjectURL(new Blob([buf], { type: 'image/png' }))
-        const img = new Image()
-        let decodeOk = true
-        await new Promise<void>((res) => {
-            img.onload  = () => res()
-            img.onerror = () => { decodeOk = false; res() }
-            img.src = blobUrl
-        })
-        URL.revokeObjectURL(blobUrl)
-        if (!decodeOk)              { setError(t.errInvalidPng);  return }
-        if (!validateImage(img))    { setError(t.errInvalidSize); return }
+        const dims = readPngDimensions(buf)
+        if (!dims)                  { setError(t.errInvalidPng);  return }
+        if (!validateImage(dims))   { setError(t.errInvalidSize); return }
 
         setBusy(true)
         try {
