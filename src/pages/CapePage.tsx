@@ -30,8 +30,7 @@ export function CapePage({ sb, user, t }: Props) {
     const skinUrl = skinSha ? `${supabaseUrl}/storage/v1/object/public/textures/${user.id}/${skinSha}.png` : null
     const capeUrl = capeSha ? `${supabaseUrl}/storage/v1/object/public/textures/${user.id}/${capeSha}.png` : null
 
-    async function handleCapeUpload(sha: string) {
-        await sb.from('skins').update({ cape_sha: sha, updated_at: new Date().toISOString() }).eq('user_id', user.id)
+    async function handleCapeUpload(_sha: string) {
         await refresh()
     }
 
@@ -50,6 +49,7 @@ export function CapePage({ sb, user, t }: Props) {
                         sb={sb}
                         user={user}
                         t={t}
+                        kind="cape"
                         accept="image/png"
                         validateImage={img => isValidCapeSize(img)}
                         onUploaded={handleCapeUpload}
@@ -77,16 +77,9 @@ export function CapePage({ sb, user, t }: Props) {
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{t.presetsTitle}</h3>
                 <PresetCards
                     sb={sb} user={user} t={t}
+                    kind="cape"
                     items={CAPE_PRESETS}
-                    thumbWidth={64}
-                    thumbHeight={32}
-                    onApplied={async (_item, sha) => {
-                        await sb.from('skins').update({
-                            cape_sha: sha,
-                            updated_at: new Date().toISOString(),
-                        }).eq('user_id', user.id)
-                        await refresh()
-                    }}
+                    onApplied={async () => { await refresh() }}
                 />
             </div>
         </div>

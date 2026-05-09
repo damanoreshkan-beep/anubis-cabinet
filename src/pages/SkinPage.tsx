@@ -32,11 +32,12 @@ export function SkinPage({ sb, user, t }: Props) {
     const skinUrl = skinSha ? `${supabaseUrl}/storage/v1/object/public/textures/${user.id}/${skinSha}.png` : null
     const capeUrl = capeSha ? `${supabaseUrl}/storage/v1/object/public/textures/${user.id}/${capeSha}.png` : null
 
-    async function handleSkinUpload(sha: string) {
-        await sb.from('skins').update({ skin_sha: sha, updated_at: new Date().toISOString() }).eq('user_id', user.id)
+    async function handleSkinUpload(_sha: string) {
         await refresh()
     }
 
+    // Clearing is rare and small; keep it as a direct PostgREST update —
+    // the skins table doesn't have the storage gateway's JWT problem.
     async function removeSkin() {
         await sb.from('skins').update({ skin_sha: null, updated_at: new Date().toISOString() }).eq('user_id', user.id)
         await refresh()
@@ -52,6 +53,8 @@ export function SkinPage({ sb, user, t }: Props) {
                         sb={sb}
                         user={user}
                         t={t}
+                        kind="skin"
+                        slim={slim}
                         accept="image/png"
                         validateImage={img => isValidSkinSize(img)}
                         onUploaded={handleSkinUpload}
@@ -82,17 +85,9 @@ export function SkinPage({ sb, user, t }: Props) {
                 <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{t.presetsTitle}</h3>
                 <PresetCards
                     sb={sb} user={user} t={t}
+                    kind="skin"
                     items={SKIN_PRESETS}
-                    onApplied={async (item, sha) => {
-                        // Apply preset = update both skin SHA and the model
-                        // flag (different presets use different geometries).
-                        await sb.from('skins').update({
-                            skin_sha: sha,
-                            slim_model: item.model === 'slim',
-                            updated_at: new Date().toISOString(),
-                        }).eq('user_id', user.id)
-                        await refresh()
-                    }}
+                    onApplied={async () => { await refresh() }}
                 />
             </div>
 

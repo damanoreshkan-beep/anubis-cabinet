@@ -1,10 +1,11 @@
-// File picker + drag-drop + client-side validation + SHA-256 hashing +
-// upload to Supabase Storage. Used by both SkinPage and CapePage — they
-// pass different `validate` callbacks because skins and capes have
-// different valid pixel dimensions.
+// File picker + drag-drop + client-side validation + upload via the
+// skin-upload Edge Function. The function does the authoritative
+// PNG/dimension check and SHA-256 hashing server-side; the client-side
+// validateImage() is purely UX (instant feedback before the round-trip).
 import { useRef, useState, useCallback } from 'preact/hooks'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { T } from '../locales'
+import { uploadTexture, TextureKind } from '../lib/uploadTexture'
 
 export type Validator = (img: HTMLImageElement) => boolean
 
@@ -12,25 +13,19 @@ interface Props {
     sb: SupabaseClient
     user: User
     t: T
-    accept: string                   // file picker filter (e.g. 'image/png')
-    validateImage: Validator         // checks pixel dimensions
-    /** Called with the SHA after a successful upload. Caller persists it
-     *  to the right column on `skins` (skin_sha / cape_sha / elytra_sha). */
+    /** Which slot we're writing to. */
+    kind: TextureKind
+    /** Skin only: tells the server which model column value to persist. */
+    slim?: boolean
+    accept: string
+    validateImage: Validator
+    /** Fires after a successful upload — caller refreshes its read of `skins`. */
     onUploaded: (sha: string) => Promise<void> | void
-    /** Optional custom hint copy shown under the dropzone. */
     hint?: string
-    /** Label shown on the trigger button. */
     label: string
 }
 
-async function sha256Hex(buf: ArrayBuffer): Promise<string> {
-    const digest = await crypto.subtle.digest('SHA-256', buf)
-    return Array.from(new Uint8Array(digest))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('')
-}
-
-export function SkinUploader({ sb, user, t, accept, validateImage, onUploaded, hint, label }: Props) {
+export function SkinUploader({ sb, user: _user, t, kind, slim, accept, validateImage, onUploaded, hint, label }: Props) {
     const inputRef = useRef<HTMLInputElement | null>(null)
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
@@ -43,39 +38,26 @@ export function SkinUploader({ sb, user, t, accept, validateImage, onUploaded, h
         const buf = await file.arrayBuffer()
         const blobUrl = URL.createObjectURL(new Blob([buf], { type: 'image/png' }))
         const img = new Image()
-        await new Promise<void>((res, rej) => {
-            img.onload = () => res()
-            img.onerror = () => rej(new Error('decode'))
+        let decodeOk = true
+        await new Promise<void>((res) => {
+            img.onload  = () => res()
+            img.onerror = () => { decodeOk = false; res() }
             img.src = blobUrl
-        }).catch(() => { setError(t.errInvalidPng) })
-        if (error) { URL.revokeObjectURL(blobUrl); return }
-        if (!validateImage(img)) {
-            URL.revokeObjectURL(blobUrl)
-            setError(t.errInvalidSize)
-            return
-        }
+        })
         URL.revokeObjectURL(blobUrl)
+        if (!decodeOk)              { setError(t.errInvalidPng);  return }
+        if (!validateImage(img))    { setError(t.errInvalidSize); return }
 
         setBusy(true)
         try {
-            const sha = await sha256Hex(buf)
-            const path = `${user.id}/${sha}.png`
-            // upsert: same SHA = same content, no need to re-upload but
-            // also harmless if we do. `upsert: true` makes re-uploading
-            // an identical skin a no-op rather than a 409 conflict.
-            const { error: upErr } = await sb.storage.from('textures').upload(path, file, {
-                contentType: 'image/png',
-                upsert: true,
-                cacheControl: '31536000, immutable',
-            })
-            if (upErr) { setError(`${t.errUploadFailed} ${upErr.message}`); return }
+            const sha = await uploadTexture(sb, kind, new Uint8Array(buf), { slim })
             await onUploaded(sha)
         } catch (e: any) {
             setError(`${t.errUploadFailed} ${e?.message ?? String(e)}`)
         } finally {
             setBusy(false)
         }
-    }, [sb, user.id, t, validateImage, onUploaded])
+    }, [sb, t, kind, slim, validateImage, onUploaded])
 
     const onDrop = useCallback((e: DragEvent) => {
         e.preventDefault()
