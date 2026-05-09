@@ -6,6 +6,35 @@ import { SkinPage } from './pages/SkinPage'
 import { CapePage } from './pages/CapePage'
 import { PasswordPage } from './pages/PasswordPage'
 
+// See the long comment in CabinetWidget below for the why. Returns the
+// shared Supabase client for the page, or null if none of the inputs
+// (host listener / supabase-url + supabase-key attrs) is available.
+function obtainSharedClient(url?: string, key?: string): SupabaseClient | null {
+    if (typeof document === 'undefined') {
+        return url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null
+    }
+    const ev = new CustomEvent('anubis-need-supabase', {
+        detail: {} as { client?: SupabaseClient },
+        bubbles: true,
+        composed: true,
+    })
+    document.dispatchEvent(ev)
+    const provided = (ev.detail as { client?: SupabaseClient }).client
+    if (provided) return provided
+    if (!url || !key) return null
+    const fresh = createClient(url, key, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    })
+    // Register self as the provider for any sibling widget that mounts
+    // after us. Filling event.detail.client only when nobody else has
+    // already responded keeps host-supplied clients precedent.
+    document.addEventListener('anubis-need-supabase', (e) => {
+        const d = (e as CustomEvent).detail as { client?: SupabaseClient }
+        if (d && !d.client) d.client = fresh
+    })
+    return fresh
+}
+
 interface Props {
     supabaseUrl?: string
     supabaseKey?: string
@@ -20,11 +49,22 @@ export function CabinetWidget({ supabaseUrl, supabaseKey, lang, mode }: Props) {
     const t = copyFor(lang)
     const inLauncher = mode === 'launcher'
 
+    // All widgets and the host must share ONE Supabase client. Two
+    // clients on the same page race on refresh-token rotation: the
+    // first refresh invalidates the cached refresh_token; whoever fires
+    // next gets an invalid_refresh_token, clears the session, and
+    // renders the cabinet's "Sign in to manage…" prompt even though
+    // the user is signed in via the host's auth widget.
+    //
+    // Coordination via a single `anubis-need-supabase` document event:
+    //   - dispatcher's `event.detail.client` gets filled in by whoever
+    //     hosts the existing client (launcher's supabaseclient.js, or a
+    //     sibling widget that already created one).
+    //   - if nobody responds, we create the client ourselves and
+    //     register a listener so the next sibling widget reuses ours.
     const sbRef = useRef<SupabaseClient | null>(null)
-    if (!sbRef.current && supabaseUrl && supabaseKey) {
-        sbRef.current = createClient(supabaseUrl, supabaseKey, {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-        })
+    if (!sbRef.current) {
+        sbRef.current = obtainSharedClient(supabaseUrl, supabaseKey)
     }
     const sb = sbRef.current
 
