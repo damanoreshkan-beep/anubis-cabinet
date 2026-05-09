@@ -3,6 +3,8 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { T } from '../locales'
 import { SkinUploader } from '../components/SkinUploader'
 import { SkinPreview3D } from '../components/SkinPreview3D'
+import { PresetCards } from '../components/PresetCards'
+import { CAPE_PRESETS } from '../presets'
 
 interface Props {
     sb: SupabaseClient
@@ -69,6 +71,23 @@ export function CapePage({ sb, user, t }: Props) {
                     <SkinPreview3D skinUrl={skinUrl} capeUrl={capeUrl} slim={slim} walking />
                     <p class="text-[11px] text-gray-500 text-center">{t.skinPreviewHint}</p>
                 </div>
+            </div>
+
+            <div class="pt-5 border-t border-brand-500/15 space-y-3">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{t.presetsTitle}</h3>
+                <PresetCards
+                    sb={sb} user={user} t={t}
+                    items={CAPE_PRESETS}
+                    thumbWidth={64}
+                    thumbHeight={32}
+                    onApplied={async (_item, sha) => {
+                        await sb.from('skins').update({
+                            cape_sha: sha,
+                            updated_at: new Date().toISOString(),
+                        }).eq('user_id', user.id)
+                        await refresh()
+                    }}
+                />
             </div>
         </div>
     )

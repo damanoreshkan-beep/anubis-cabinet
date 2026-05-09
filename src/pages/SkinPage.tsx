@@ -3,6 +3,9 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { T } from '../locales'
 import { SkinUploader } from '../components/SkinUploader'
 import { SkinPreview3D } from '../components/SkinPreview3D'
+import { PresetCards } from '../components/PresetCards'
+import { ExternalLinks } from '../components/ExternalLinks'
+import { SKIN_PRESETS, SKIN_LINKS } from '../presets'
 
 interface Props {
     sb: SupabaseClient
@@ -73,6 +76,28 @@ export function SkinPage({ sb, user, t }: Props) {
                     <SkinPreview3D skinUrl={skinUrl} capeUrl={capeUrl} slim={slim} />
                     <p class="text-[11px] text-gray-500 text-center">{t.skinPreviewHint}</p>
                 </div>
+            </div>
+
+            <div class="pt-5 border-t border-brand-500/15 space-y-3">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{t.presetsTitle}</h3>
+                <PresetCards
+                    sb={sb} user={user} t={t}
+                    items={SKIN_PRESETS}
+                    onApplied={async (item, sha) => {
+                        // Apply preset = update both skin SHA and the model
+                        // flag (different presets use different geometries).
+                        await sb.from('skins').update({
+                            skin_sha: sha,
+                            slim_model: item.model === 'slim',
+                            updated_at: new Date().toISOString(),
+                        }).eq('user_id', user.id)
+                        await refresh()
+                    }}
+                />
+            </div>
+
+            <div class="pt-5 border-t border-brand-500/15">
+                <ExternalLinks items={SKIN_LINKS} title={t.externalSkinSites} />
             </div>
         </div>
     )

@@ -36,6 +36,9 @@ export const COPY = {
         capeReplace: 'Replace cape',
         capeRemove: 'Remove cape',
 
+        presetsTitle: 'Presets',
+        externalSkinSites: 'Where to find more skins',
+
         passwordTitle: 'Change password',
         passwordCurrent: 'Current password',
         passwordNew: 'New password',
@@ -86,6 +89,9 @@ export const COPY = {
         capeUpload: 'Загрузить плащ',
         capeReplace: 'Заменить плащ',
         capeRemove: 'Удалить плащ',
+
+        presetsTitle: 'Готовые',
+        externalSkinSites: 'Где найти ещё скины',
 
         passwordTitle: 'Сменить пароль',
         passwordCurrent: 'Текущий пароль',
@@ -138,6 +144,9 @@ export const COPY = {
         capeReplace: 'Замінити плащ',
         capeRemove: 'Видалити плащ',
 
+        presetsTitle: 'Готові',
+        externalSkinSites: 'Де знайти ще скіни',
+
         passwordTitle: 'Змінити пароль',
         passwordCurrent: 'Поточний пароль',
         passwordNew: 'Новий пароль',
@@ -189,6 +198,9 @@ export const COPY = {
         capeReplace: 'Umhang ersetzen',
         capeRemove: 'Umhang entfernen',
 
+        presetsTitle: 'Vorlagen',
+        externalSkinSites: 'Mehr Skins finden',
+
         passwordTitle: 'Passwort ändern',
         passwordCurrent: 'Aktuelles Passwort',
         passwordNew: 'Neues Passwort',
@@ -239,6 +251,9 @@ export const COPY = {
         capeUpload: 'Wgraj pelerynę',
         capeReplace: 'Zamień pelerynę',
         capeRemove: 'Usuń pelerynę',
+
+        presetsTitle: 'Szablony',
+        externalSkinSites: 'Gdzie szukać więcej skórek',
 
         passwordTitle: 'Zmień hasło',
         passwordCurrent: 'Obecne hasło',
