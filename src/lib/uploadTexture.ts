@@ -23,6 +23,21 @@ function bytesToBase64(bytes: Uint8Array): string {
     return btoa(out)
 }
 
+/** Thrown when the skin-upload function returns a non-2xx response.
+ *  `code` is the machine-readable error string from the function
+ *  (e.g. `cape_locked`, `hd_skin_locked`, `invalid_dimensions`).
+ *  Callers should branch on `code` rather than parsing the message. */
+export class UploadError extends Error {
+    code: string
+    status: number
+    constructor(code: string, status: number, message?: string) {
+        super(message || code)
+        this.code = code
+        this.status = status
+        this.name = 'UploadError'
+    }
+}
+
 export async function uploadTexture(
     sb: SupabaseClient,
     kind: TextureKind,
@@ -30,7 +45,7 @@ export async function uploadTexture(
     opts: { slim?: boolean } = {},
 ): Promise<string> {
     const { data: { session } } = await sb.auth.getSession()
-    if (!session) throw new Error('not signed in')
+    if (!session) throw new UploadError('not_signed_in', 401)
 
     const supabaseUrl = (sb as any).supabaseUrl as string
     const supabaseKey = (sb as any).supabaseKey as string
@@ -49,8 +64,14 @@ export async function uploadTexture(
         }),
     })
     if (!r.ok) {
-        const body = await r.text()
-        throw new Error(body || `${r.status}`)
+        let code = `http_${r.status}`
+        let message: string | undefined
+        try {
+            const body = await r.json()
+            if (body?.error) code = String(body.error)
+            if (body?.message) message = String(body.message)
+        } catch { /* non-JSON body — keep generic code */ }
+        throw new UploadError(code, r.status, message)
     }
     const { sha } = await r.json() as { sha: string }
     return sha

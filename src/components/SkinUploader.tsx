@@ -12,7 +12,7 @@
 import { useRef, useState, useCallback } from 'preact/hooks'
 import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { T } from '../locales'
-import { uploadTexture, TextureKind } from '../lib/uploadTexture'
+import { uploadTexture, TextureKind, UploadError } from '../lib/uploadTexture'
 
 export interface PngDimensions { w: number; h: number }
 export type Validator = (dims: PngDimensions) => boolean
@@ -40,11 +40,19 @@ interface Props {
     validateImage: Validator
     /** Fires after a successful upload — caller refreshes its read of `skins`. */
     onUploaded: (sha: string) => Promise<void> | void
+    /** Optional: client-side guard against attempting a paywalled upload.
+     *  Called after dimension validation; if it returns true, the upload
+     *  is aborted and `onPaywall` fires instead. Spares the network
+     *  round-trip when the gate is obvious (e.g. HD skin + no unlock). */
+    paywallCheck?: (dims: PngDimensions) => boolean
+    /** Fires when either `paywallCheck` returned true OR the server
+     *  rejected with a *_locked code. Caller renders the UnlockCard. */
+    onPaywall?: () => void
     hint?: string
     label: string
 }
 
-export function SkinUploader({ sb, user: _user, t, kind, slim, accept, validateImage, onUploaded, hint, label }: Props) {
+export function SkinUploader({ sb, user: _user, t, kind, slim, accept, validateImage, onUploaded, paywallCheck, onPaywall, hint, label }: Props) {
     const inputRef = useRef<HTMLInputElement | null>(null)
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
@@ -59,16 +67,30 @@ export function SkinUploader({ sb, user: _user, t, kind, slim, accept, validateI
         if (!dims)                  { setError(t.errInvalidPng);  return }
         if (!validateImage(dims))   { setError(t.errInvalidSize); return }
 
+        // Client-side paywall gate. The Edge Function does the
+        // authoritative check; this just avoids a doomed upload when
+        // we can already tell it'd be rejected.
+        if (paywallCheck?.(dims)) {
+            onPaywall?.()
+            return
+        }
+
         setBusy(true)
         try {
             const sha = await uploadTexture(sb, kind, new Uint8Array(buf), { slim })
             await onUploaded(sha)
         } catch (e: any) {
+            if (e instanceof UploadError && (e.code === 'hd_skin_locked' || e.code === 'cape_locked')) {
+                // Server told us the dim/kind combo is paywalled —
+                // hand off to the caller's lock-screen rendering.
+                onPaywall?.()
+                return
+            }
             setError(`${t.errUploadFailed} ${e?.message ?? String(e)}`)
         } finally {
             setBusy(false)
         }
-    }, [sb, t, kind, slim, validateImage, onUploaded])
+    }, [sb, t, kind, slim, validateImage, onUploaded, paywallCheck, onPaywall])
 
     const onDrop = useCallback((e: DragEvent) => {
         e.preventDefault()
