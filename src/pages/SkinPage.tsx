@@ -58,6 +58,12 @@ export function SkinPage({ sb, user, t }: Props) {
                         <UnlockCard t={t} kind="hdSkin" />
                     ) : (
                         <>
+                            {/* Always-on hint so users learn that HD
+                                exists, what it costs, and how to get
+                                it — before they bother picking a file
+                                and getting bounced. Hidden once the
+                                entitlement is granted. */}
+                            {!ent.hdSkinUnlocked && <HdHintBanner t={t} />}
                             <SkinUploader
                                 sb={sb}
                                 user={user}
@@ -120,4 +126,37 @@ function isValidSkinSize(w: number, h: number) {
 // Edge Function uses for its entitlement gate.
 function isHdSkin(w: number, h: number) {
     return w >= 128 || h >= 128
+}
+
+// Compact, always-visible hint above the regular uploader so users see
+// the HD-skin option before they try to upload one. Clicking it
+// dispatches the same `anubis-open-donate` event the UnlockCard uses,
+// so hosts (launcher, partner site) route to the donate flow.
+function HdHintBanner({ t }: { t: T }) {
+    const onSupport = () => {
+        const detail: { handled?: boolean } = {}
+        const ev = new CustomEvent('anubis-open-donate', { detail, bubbles: true, composed: true })
+        document.dispatchEvent(ev)
+        if (!detail.handled) {
+            window.open('https://vitmostovoy-rgb.github.io/minecraft/#donate', '_blank', 'noopener,noreferrer')
+        }
+    }
+    return (
+        <div class="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs">
+            <svg class="w-4 h-4 text-amber-300 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-7a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2zm10-11V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <div class="flex-1 text-gray-300">
+                <span class="font-semibold text-white">{t.lockHdSkinTitle}</span>
+                <span class="text-gray-400"> · {t.lockPriceHdSkin} ₴</span>
+            </div>
+            <button
+                type="button"
+                onClick={onSupport}
+                class="text-amber-200 hover:text-amber-100 font-semibold whitespace-nowrap"
+            >
+                {t.lockBuyCta} →
+            </button>
+        </div>
+    )
 }
