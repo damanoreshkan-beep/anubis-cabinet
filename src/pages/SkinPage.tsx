@@ -8,6 +8,7 @@ import { ExternalLinks } from '../components/ExternalLinks'
 import { UnlockCard } from '../components/UnlockCard'
 import { SKIN_PRESETS, SKIN_LINKS } from '../presets'
 import { useEntitlements } from '../lib/useEntitlements'
+import { fetchRates, readCachedRates, isFresh, type Rates } from '../lib/rates'
 
 interface Props {
     sb: SupabaseClient
@@ -133,6 +134,19 @@ function isHdSkin(w: number, h: number) {
 // dispatches the same `anubis-open-donate` event the UnlockCard uses,
 // so hosts (launcher, partner site) route to the donate flow.
 function HdHintBanner({ t }: { t: T }) {
+    // Same conversion as <UnlockCard>: paint instantly from the shared
+    // localStorage cache, refresh in the background once a day.
+    const [rates, setRates] = useState<Rates | null>(() => readCachedRates())
+    useEffect(() => {
+        if (isFresh(rates)) return
+        let cancelled = false
+        fetchRates().then(r => { if (!cancelled) setRates(r) }).catch(() => {})
+        return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    const usd = rates ? (t.lockPriceHdSkin * rates.USD).toFixed(2) : null
+    const rub = rates ? Math.round(t.lockPriceHdSkin * rates.RUB)  : null
+
     const onSupport = () => {
         const detail: { handled?: boolean } = {}
         const ev = new CustomEvent('anubis-open-donate', { detail, bubbles: true, composed: true })
@@ -149,6 +163,9 @@ function HdHintBanner({ t }: { t: T }) {
             <div class="flex-1 text-gray-300">
                 <span class="font-semibold text-white">{t.lockHdSkinTitle}</span>
                 <span class="text-gray-400"> · {t.lockPriceHdSkin} ₴</span>
+                {usd && rub && (
+                    <span class="text-gray-500"> · ≈&nbsp;{rub}&nbsp;₽ / ≈&nbsp;${usd}</span>
+                )}
             </div>
             <button
                 type="button"

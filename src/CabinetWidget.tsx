@@ -163,34 +163,34 @@ function CabinetShell({
                 )}
             </header>
 
-            <div class="grid gap-4 md:grid-cols-[200px_1fr]">
-                <aside class="glass rounded-2xl p-2 self-start">
-                    {navItems.map(item => {
-                        const active = page === item.id
-                        return (
-                            <button
-                                type="button"
-                                onClick={() => onPage(item.id)}
-                                class={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
-                                    active
-                                        ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/30'
-                                        : 'text-gray-300 hover:text-white hover:bg-brand-500/10'
-                                }`}
-                            >
-                                <span class={active ? 'text-white' : 'text-brand-300'}>{item.icon}</span>
-                                <span>{item.label}</span>
-                            </button>
-                        )
-                    })}
-                </aside>
+            <nav class="glass rounded-2xl p-1.5 mb-4 flex flex-wrap gap-1" role="tablist">
+                {navItems.map(item => {
+                    const active = page === item.id
+                    return (
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={active}
+                            onClick={() => onPage(item.id)}
+                            class={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition ${
+                                active
+                                    ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/30'
+                                    : 'text-gray-300 hover:text-white hover:bg-brand-500/10'
+                            }`}
+                        >
+                            <span class={active ? 'text-white' : 'text-brand-300'}>{item.icon}</span>
+                            <span>{item.label}</span>
+                        </button>
+                    )
+                })}
+            </nav>
 
-                <main class="glass rounded-2xl p-5 md:p-7 min-h-[420px]">
-                    {page === 'profile'  && <ProfilePage  sb={sb} user={user} t={t} nick={nick} />}
-                    {page === 'skin'     && <SkinPage     sb={sb} user={user} t={t} nick={nick} />}
-                    {page === 'cape'     && <CapePage     sb={sb} user={user} t={t} />}
-                    {page === 'password' && <PasswordPage sb={sb}              t={t} />}
-                </main>
-            </div>
+            <main class="glass rounded-2xl p-5 md:p-7 min-h-[420px]">
+                {page === 'profile'  && <ProfilePage  sb={sb} user={user} t={t} nick={nick} />}
+                {page === 'skin'     && <SkinPage     sb={sb} user={user} t={t} nick={nick} />}
+                {page === 'cape'     && <CapePage     sb={sb} user={user} t={t} />}
+                {page === 'password' && <PasswordPage sb={sb}              t={t} />}
+            </main>
         </div>
     )
 }
