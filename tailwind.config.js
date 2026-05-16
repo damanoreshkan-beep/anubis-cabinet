@@ -1,42 +1,18 @@
 /** @type {import('tailwindcss').Config} */
-// Mirrors the AnubisWorld palette used by the website + auth widget.
-// `important: '.aw-cabinet-scope'` scopes every utility selector to the
-// `.aw-cabinet-scope` ancestor — same pattern the auth widget uses, keeps
-// utility CSS from leaking into the embedding host (launcher / partner site).
+// Anubis World design system is the canonical source for palette,
+// spacing, radius, typography, and keyframes. We extend the shared
+// preset with widget-specific concerns only: scoping selector and the
+// `preflight: false` toggle that keeps Tailwind's reset out of the
+// host page.
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+const anubisPreset = require('@anubis/ds/dist/tailwind-preset.cjs')
+
 export default {
+    presets: [anubisPreset],
     content: ['./src/**/*.{ts,tsx,html}', './index.html'],
     important: '.aw-cabinet-scope',
     corePlugins: {
         preflight: false,
     },
-    theme: {
-        extend: {
-            colors: {
-                brand: {
-                    400: '#a78bfa',
-                    500: '#8b5cf6',
-                    600: '#7c3aed',
-                    700: '#6d28d9',
-                },
-                violet: {
-                    400: '#c084fc',
-                    500: '#a855f7',
-                },
-                egypt: {
-                    400: '#22d3ee',
-                },
-                amber: {
-                    400: '#fbbf24',
-                },
-                surface: {
-                    900: '#070612',
-                    950: '#040309',
-                },
-            },
-            fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
-            },
-        },
-    },
-    plugins: [],
 }
