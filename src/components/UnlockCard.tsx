@@ -12,7 +12,7 @@
 // the partner-site #donate hash as a fallback.
 import { useEffect, useState } from 'preact/hooks'
 import type { T } from '../locales'
-import { fetchRates, readCachedRates, isFresh, type Rates } from '@anubis/widget-core'
+import { fetchRates, readCachedRates, isFresh, type Rates } from '@anubis/core'
 
 interface Props {
     t: T

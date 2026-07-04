@@ -8,7 +8,7 @@ import { ExternalLinks } from '../components/ExternalLinks'
 import { UnlockCard } from '../components/UnlockCard'
 import { SKIN_PRESETS, SKIN_LINKS } from '../presets'
 import { useEntitlements } from '../lib/useEntitlements'
-import { fetchRates, readCachedRates, isFresh, type Rates } from '@anubis/widget-core'
+import { fetchRates, readCachedRates, isFresh, type Rates } from '@anubis/core'
 
 interface Props {
     sb: SupabaseClient
