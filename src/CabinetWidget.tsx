@@ -1,39 +1,11 @@
 import { useEffect, useState, useRef, useMemo } from 'preact/hooks'
-import { createClient, type SupabaseClient, type Session, type User } from '@supabase/supabase-js'
+import { type SupabaseClient, type Session, type User } from '@supabase/supabase-js'
+import { obtainSharedClient } from '@anubis/widget-core'
 import { copyFor, type T } from './locales'
 import { ProfilePage } from './pages/ProfilePage'
 import { SkinPage } from './pages/SkinPage'
 import { CapePage } from './pages/CapePage'
 import { PasswordPage } from './pages/PasswordPage'
-
-// See the long comment in CabinetWidget below for the why. Returns the
-// shared Supabase client for the page, or null if none of the inputs
-// (host listener / supabase-url + supabase-key attrs) is available.
-function obtainSharedClient(url?: string, key?: string): SupabaseClient | null {
-    if (typeof document === 'undefined') {
-        return url && key ? createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null
-    }
-    const ev = new CustomEvent('anubis-need-supabase', {
-        detail: {} as { client?: SupabaseClient },
-        bubbles: true,
-        composed: true,
-    })
-    document.dispatchEvent(ev)
-    const provided = (ev.detail as { client?: SupabaseClient }).client
-    if (provided) return provided
-    if (!url || !key) return null
-    const fresh = createClient(url, key, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-    })
-    // Register self as the provider for any sibling widget that mounts
-    // after us. Filling event.detail.client only when nobody else has
-    // already responded keeps host-supplied clients precedent.
-    document.addEventListener('anubis-need-supabase', (e) => {
-        const d = (e as CustomEvent).detail as { client?: SupabaseClient }
-        if (d && !d.client) d.client = fresh
-    })
-    return fresh
-}
 
 interface Props {
     supabaseUrl?: string
