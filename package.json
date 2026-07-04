@@ -9,8 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@anubis/core": "github:damanoreshkan-beep/anubis-core",
-        "@anubis/ds": "github:damanoreshkan-beep/anubis-ds",
+        "@anubis/core": "github:damanoreshkan-beep/anubis-core#semver:^0.2.0",
+        "@anubis/ds": "github:damanoreshkan-beep/anubis-ds#semver:^1.2.0",
         "@supabase/supabase-js": "^2.105.1",
         "preact": "^10.29.1",
         "preact-custom-element": "^4.6.0",
