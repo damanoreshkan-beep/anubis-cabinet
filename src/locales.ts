@@ -1,5 +1,7 @@
 // Single COPY map keyed by locale id (2-char code). New keys must be added
 // to every locale at the same time — missing keys fall through to `en`.
+import { pickLocale } from '@anubis/widget-core'
+
 export type Locale = 'en' | 'ru' | 'uk' | 'de' | 'pl'
 
 export const COPY = {
@@ -328,9 +330,5 @@ export const COPY = {
 export type T = typeof COPY['en']
 
 export function copyFor(lang?: string): T {
-    const code = ((lang || 'en').slice(0, 2).toLowerCase()) as Locale
-    // The other locales have identical key shape but TS sees the literal
-    // string-typed values as incompatible. Cast through `unknown` since
-    // we know the structure is identical by construction.
-    return (code in COPY ? COPY[code] : COPY.en) as unknown as T
+    return pickLocale(COPY, lang) as unknown as T
 }

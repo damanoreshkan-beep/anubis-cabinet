@@ -13,7 +13,8 @@
         "preact": "^10.29.1",
         "preact-custom-element": "^4.6.0",
         "skinview3d": "^3.4.0",
-        "@anubis/ds": "github:damanoreshkan-beep/anubis-ds"
+        "@anubis/ds": "github:damanoreshkan-beep/anubis-ds",
+        "@anubis/widget-core": "github:damanoreshkan-beep/anubis-widget-core"
     },
     "devDependencies": {
         "@preact/preset-vite": "^2.10.5",
