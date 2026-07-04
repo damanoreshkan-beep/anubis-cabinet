@@ -1,6 +1,6 @@
 // Single COPY map keyed by locale id (2-char code). New keys must be added
 // to every locale at the same time — missing keys fall through to `en`.
-import { pickLocale } from '@anubis/widget-core'
+import { pickLocale } from '@anubis/core'
 
 export type Locale = 'en' | 'ru' | 'uk' | 'de' | 'pl'
 

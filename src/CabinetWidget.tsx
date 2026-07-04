@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'preact/hooks'
 import { type SupabaseClient, type Session, type User } from '@supabase/supabase-js'
-import { obtainSharedClient } from '@anubis/widget-core'
+import { obtainSharedClient } from '@anubis/core'
 import { copyFor, type T } from './locales'
 import { ProfilePage } from './pages/ProfilePage'
 import { SkinPage } from './pages/SkinPage'
